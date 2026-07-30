@@ -23,36 +23,71 @@ const customRequestRoutes = require('./routes/customRequestRoutes');
 const bannerRoutes = require('./routes/bannerRoutes');
 const settingRoutes = require('./routes/settingRoutes');
 
-// Connect to database
+// ─── Environment Variables Validation ───────────────────────────────────────
+const requiredEnvVars = [
+  'NODE_ENV',
+  'PORT',
+  'MONGODB_URI',
+  'JWT_SECRET',
+  'JWT_EXPIRE',
+  'CLOUDINARY_CLOUD_NAME',
+  'CLOUDINARY_API_KEY',
+  'CLOUDINARY_API_SECRET',
+  'BUSINESS_NAME',
+  'BUSINESS_WHATSAPP',
+  'CLIENT_URL',
+];
+
+const missingEnvVars = requiredEnvVars.filter((varName) => !process.env[varName]);
+
+if (missingEnvVars.length > 0) {
+  console.warn(`\n⚠️  WARNING: Missing environment variables: ${missingEnvVars.join(', ')}`);
+  if (process.env.NODE_ENV === 'production') {
+    console.error(`❌ Critical environment variables are missing in production! Please check your Railway settings.\n`);
+  }
+} else {
+  console.log(`\n✅ Environment Check Passed: All required environment variables are set.`);
+}
+
+// ─── Connect to Database ─────────────────────────────────────────────────────
 connectDB();
 
 const app = express();
+
+// ─── Express Proxy Setup (Required for Railway / Vercel / Reverse Proxies) ──
+app.set('trust proxy', 1);
 
 // ─── Security Middleware ─────────────────────────────────────────────────────
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
 }));
 
-// ─── CORS ───────────────────────────────────────────────────────────────────
-const clientUrls = (process.env.CLIENT_URL || '').split(',').map(url => url.trim());
+// ─── CORS Configuration ──────────────────────────────────────────────────────
+const clientUrls = (process.env.CLIENT_URL || '')
+  .split(',')
+  .map((url) => url.trim())
+  .filter(Boolean);
+
 const allowedOrigins = [
   ...clientUrls,
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'http://localhost:5174',
-].filter(Boolean);
+  ...(process.env.NODE_ENV !== 'production'
+    ? ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5174']
+    : []),
+];
 
 app.use(cors({
   origin: (origin, callback) => {
+    // Allow non-browser requests (Postman, mobile apps, server-to-server)
+    if (!origin) return callback(null, true);
+
     if (
-      !origin || 
-      allowedOrigins.includes(origin) || 
-      origin.endsWith('.vercel.app')
+      allowedOrigins.includes(origin) ||
+      (process.env.NODE_ENV === 'production' && origin.endsWith('.vercel.app'))
     ) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+      return callback(null, true);
     }
+
+    return callback(new Error(`CORS Error: Origin '${origin}' is not allowed.`));
   },
   credentials: true,
 }));
@@ -70,7 +105,7 @@ app.get('/', (req, res) => {
     success: true,
     message: '💅 PolishedByAnshika API is running!',
     version: '1.0.0',
-    environment: process.env.NODE_ENV,
+    environment: process.env.NODE_ENV || 'development',
     timestamp: new Date().toISOString(),
   });
 });
@@ -103,9 +138,12 @@ app.use(errorHandler);
 // ─── Start Server ────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => {
-  console.log(`\n💅 PolishedByAnshika Server running on port ${PORT}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
-  console.log(`🔗 API URL: http://localhost:${PORT}\n`);
+  console.log(`\n==================================================`);
+  console.log(`💅 PolishedByAnshika Server Running`);
+  console.log(`🌍 Environment     : ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🚀 Listening Port   : ${PORT}`);
+  console.log(`🔗 Allowed Origins  : ${allowedOrigins.length > 0 ? allowedOrigins.join(', ') : 'None specified'}`);
+  console.log(`==================================================\n`);
 });
 
 // Handle unhandled promise rejections
