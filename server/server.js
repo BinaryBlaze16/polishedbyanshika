@@ -63,34 +63,44 @@ app.use(helmet({
 }));
 
 // ─── CORS Configuration ──────────────────────────────────────────────────────
-const clientUrls = (process.env.CLIENT_URL || '')
-  .split(',')
-  .map((url) => url.trim())
+const rawClientUrls = process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',') : [];
+const clientUrls = rawClientUrls
+  .map((url) => url.trim().replace(/\/+$/, ''))
   .filter(Boolean);
 
 const allowedOrigins = [
   ...clientUrls,
-  ...(process.env.NODE_ENV !== 'production'
-    ? ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5174']
-    : []),
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://localhost:5174',
+  'http://127.0.0.1:5173',
 ];
 
-app.use(cors({
+const corsOptions = {
   origin: (origin, callback) => {
     // Allow non-browser requests (Postman, mobile apps, server-to-server)
     if (!origin) return callback(null, true);
 
+    const normalizedOrigin = origin.trim().replace(/\/+$/, '');
+
+    // Allow configured CLIENT_URL, any *.vercel.app deployment, or local dev
     if (
-      allowedOrigins.includes(origin) ||
-      (process.env.NODE_ENV === 'production' && origin.endsWith('.vercel.app'))
+      allowedOrigins.includes(normalizedOrigin) ||
+      normalizedOrigin.endsWith('.vercel.app') ||
+      normalizedOrigin.startsWith('http://localhost:') ||
+      normalizedOrigin.startsWith('http://127.0.0.1:')
     ) {
       return callback(null, true);
     }
 
-    return callback(new Error(`CORS Error: Origin '${origin}' is not allowed.`));
+    console.warn(`⚠️ CORS blocked request from origin: ${origin}`);
+    return callback(null, false);
   },
   credentials: true,
-}));
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
 
 // ─── Body Parser ─────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }));
