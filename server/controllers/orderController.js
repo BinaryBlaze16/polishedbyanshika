@@ -116,12 +116,19 @@ const createOrder = asyncHandler(async (req, res) => {
     }
   }
 
+  const utrNumber = req.body.utrNumber || req.body.paymentDetails?.utrNumber;
+
   const order = await Order.create({
     orderNumber,
     user: req.user._id,
     orderItems: formattedItems,
     shippingAddress,
     paymentMethod,
+    paymentDetails: utrNumber ? {
+      utrNumber,
+      isPaid: false,
+      paidAt: new Date()
+    } : undefined,
     itemsPrice,
     shippingPrice,
     discountAmount: discount,

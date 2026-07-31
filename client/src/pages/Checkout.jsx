@@ -220,55 +220,61 @@ export default function Checkout() {
     setStep(2);
   };
 
+  const buildOrderPayload = (extraData = {}) => {
+    const shippingAddress = {
+      fullName: shippingData.fullName || `${shippingData.firstName || ''} ${shippingData.lastName || ''}`.trim(),
+      phone: shippingData.phone,
+      houseNumber: shippingData.houseNumber || shippingData.address,
+      street: shippingData.street || shippingData.address2 || shippingData.address,
+      landmark: shippingData.landmark || '',
+      addressLine1: shippingData.address || `${shippingData.houseNumber}, ${shippingData.street}`,
+      addressLine2: shippingData.address2 || shippingData.landmark || '',
+      city: shippingData.city,
+      state: shippingData.state,
+      pincode: shippingData.pincode,
+      country: shippingData.country || 'India',
+      addressType: shippingData.addressType || 'Home'
+    };
+
+    const orderItems = items.map(item => ({
+      product: item.product?._id || item.product?.id || item._id || item.id,
+      quantity: item.quantity || item.qty || 1,
+      shape: item.shape || item.selectedShape,
+      length: item.length || item.selectedLength,
+      size: item.size || item.selectedSize,
+      customSizes: item.customSizes || item.customSizeInMm
+    }));
+
+    const { coupon } = useCartStore.getState();
+
+    return {
+      orderItems,
+      shippingAddress,
+      paymentMethod: paymentMethod === 'cod' ? 'COD' : 'UPI_MANUAL',
+      couponCode: coupon?.code || null,
+      saveToProfile: shippingData.saveToProfile || false,
+      ...extraData
+    };
+  };
+
   const handlePlaceOrder = async () => {
+    if (paymentMethod === 'upi') {
+      // For online payment: open UPI QR & UTR Modal FIRST without creating order in DB yet
+      setIsUpiModalOpen(true);
+      return;
+    }
+
+    // Cash on Delivery (COD): Place order directly in 1 click
     setIsPlacingOrder(true);
-    const toastId = toast.loading('Placing your order...');
+    const toastId = toast.loading('Placing your COD order...');
     try {
-      const shippingAddress = {
-        fullName: shippingData.fullName || `${shippingData.firstName || ''} ${shippingData.lastName || ''}`.trim(),
-        phone: shippingData.phone,
-        houseNumber: shippingData.houseNumber || shippingData.address,
-        street: shippingData.street || shippingData.address2 || shippingData.address,
-        landmark: shippingData.landmark || '',
-        addressLine1: shippingData.address || `${shippingData.houseNumber}, ${shippingData.street}`,
-        addressLine2: shippingData.address2 || shippingData.landmark || '',
-        city: shippingData.city,
-        state: shippingData.state,
-        pincode: shippingData.pincode,
-        country: shippingData.country || 'India',
-        addressType: shippingData.addressType || 'Home'
-      };
-
-      const orderItems = items.map(item => ({
-        product: item.product?._id || item.product?.id || item._id || item.id,
-        quantity: item.quantity || item.qty || 1,
-        shape: item.shape || item.selectedShape,
-        length: item.length || item.selectedLength,
-        size: item.size || item.selectedSize,
-        customSizes: item.customSizes || item.customSizeInMm
-      }));
-
-      const { coupon } = useCartStore.getState();
-
-      const orderPayload = {
-        orderItems,
-        shippingAddress,
-        paymentMethod: paymentMethod === 'cod' ? 'COD' : 'UPI_MANUAL',
-        couponCode: coupon?.code || null,
-        saveToProfile: shippingData.saveToProfile || false
-      };
-
+      const orderPayload = buildOrderPayload();
       const res = await orderService.createOrder(orderPayload);
       if (res && res.success) {
-        toast.success('Order placed successfully! 💅', { id: toastId });
+        toast.success('COD Order placed successfully! 💅', { id: toastId });
         const orderObj = res.data;
-        if (paymentMethod === 'upi') {
-          setCreatedOrder(orderObj);
-          setIsUpiModalOpen(true);
-        } else {
-          clearCart();
-          navigate(`/order/${orderObj._id || orderObj.id}`);
-        }
+        clearCart();
+        navigate(`/order/${orderObj._id || orderObj.id}`);
       }
     } catch (err) {
       console.error(err);
@@ -279,22 +285,21 @@ export default function Checkout() {
   };
 
   const handlePaymentSubmit = async (utr) => {
-    if (!createdOrder) return;
-    const toastId = toast.loading('Submitting payment proof...');
+    // Called when customer submits 12-digit UTR from UpiQrModal
+    const toastId = toast.loading('Creating order & submitting payment proof...');
     try {
-      const fd = new FormData();
-      fd.append('utrNumber', utr);
-      
-      const res = await orderService.submitPaymentProof(createdOrder._id || createdOrder.id, fd);
+      const orderPayload = buildOrderPayload({ utrNumber: utr });
+      const res = await orderService.createOrder(orderPayload);
       if (res && res.success) {
-        toast.success('Payment proof submitted successfully!', { id: toastId });
+        toast.success('Payment proof submitted & Order placed successfully! 💅', { id: toastId });
+        const orderObj = res.data;
         setIsUpiModalOpen(false);
         clearCart();
-        navigate(`/order/${createdOrder._id || createdOrder.id}`);
+        navigate(`/order/${orderObj._id || orderObj.id}`);
       }
     } catch (err) {
       console.error(err);
-      toast.error(err.response?.data?.message || 'Failed to submit payment details', { id: toastId });
+      toast.error(err.response?.data?.message || 'Failed to submit payment & create order', { id: toastId });
     }
   };
 
