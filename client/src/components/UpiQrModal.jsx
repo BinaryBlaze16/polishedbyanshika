@@ -12,16 +12,17 @@ const UpiQrModal = ({ isOpen, onClose, total, orderId, onPaymentSubmit, upiId: c
   );
 
   useEffect(() => {
-    if (isOpen && !customUpiId) {
+    if (isOpen) {
       api.get('/settings/public')
         .then(res => {
-          if (res.data?.data?.businessUpi) {
-            setUpiId(res.data.data.businessUpi);
+          const liveUpi = res.data?.data?.businessUpi || res.data?.businessUpi;
+          if (liveUpi) {
+            setUpiId(liveUpi);
           }
         })
         .catch(err => console.error("Could not fetch business UPI from settings", err));
     }
-  }, [isOpen, customUpiId]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

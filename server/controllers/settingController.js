@@ -2,13 +2,16 @@ const asyncHandler = require('express-async-handler');
 const Setting = require('../models/Setting');
 
 const getPublicSettings = asyncHandler(async (req, res) => {
-  const settings = await Setting.find({ isPublic: true });
+  // Fetch all settings stored in MongoDB
+  const settings = await Setting.find({});
   const formattedSettings = {};
   settings.forEach(s => {
-    formattedSettings[s.key] = s.value;
+    if (s.key && s.value !== undefined) {
+      formattedSettings[s.key] = s.value;
+    }
   });
 
-  // Dynamic fallbacks from process.env
+  // Dynamic fallbacks from process.env if not set in DB
   if (!formattedSettings.businessUpi) {
     formattedSettings.businessUpi = process.env.BUSINESS_UPI || 'srivastavaanant39@oksbi';
   }
@@ -19,7 +22,7 @@ const getPublicSettings = asyncHandler(async (req, res) => {
     formattedSettings.businessWhatsapp = process.env.BUSINESS_WHATSAPP || '+916394802184';
   }
 
-  res.json({ success: true, data: formattedSettings });
+  res.json({ success: true, data: formattedSettings, businessUpi: formattedSettings.businessUpi });
 });
 
 const getAllSettings = asyncHandler(async (req, res) => {
