@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import adminService from "../../services/adminService";
-import { Search, Shield, UserX, UserCheck, Loader2, Users, Eye, MapPin, Package, ShoppingBag, X, Calendar, Phone, Mail } from "lucide-react";
+import { Search, Shield, UserX, UserCheck, Loader2, Users, Eye, MapPin, Package, ShoppingBag, X, Calendar, Phone, Mail, Trash2 } from "lucide-react";
 import { formatDate, formatINR, getStatusColor } from "../../utils/formatCurrency";
 import toast from "react-hot-toast";
 
@@ -77,6 +77,28 @@ const AdminCustomers = () => {
     }
   };
 
+  const handleDeleteUser = async (user) => {
+    if (user.role === 'admin') {
+      return toast.error("Staff/Admin accounts cannot be deleted");
+    }
+
+    if (!window.confirm(`⚠️ PERMANENT DELETE WARNING:\n\nAre you sure you want to delete user "${user.name}" (${user.email})?\n\nDeleting this user will PERMANENTLY REMOVE:\n- Account profile\n- ALL their past orders & order history\n- ALL saved delivery addresses\n- Custom requests & reviews\n\nThis action CANNOT be undone!`)) return;
+
+    try {
+      const res = await adminService.deleteUser(user._id);
+      if (res && res.success) {
+        toast.success(`User "${user.name}" and all associated orders deleted! 🗑️`);
+        if (selectedUser && selectedUser._id === user._id) {
+          setSelectedUser(null);
+        }
+        fetchUsers();
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Failed to delete user account");
+    }
+  };
+
   const getInitials = (name) => {
     if (!name) return "?";
     return name
@@ -94,7 +116,7 @@ const AdminCustomers = () => {
         <div>
           <h1 className="text-3xl font-display font-bold text-dark-800">Customer & Account Management</h1>
           <p className="text-dark-400 text-sm mt-1">
-            View registered user profiles, saved delivery addresses, order histories, and lifetime spending.
+            View registered user profiles, inspect lifetime spending, suspend access, or delete user accounts & orders.
           </p>
         </div>
         <div className="bg-rose-50 border border-rose-200 text-rose-600 font-semibold px-4 py-2 rounded-xl text-sm flex items-center gap-2">
@@ -189,17 +211,26 @@ const AdminCustomers = () => {
                         <Eye size={14} /> Inspect
                       </button>
                       {u.role !== "admin" && (
-                        <button
-                          onClick={() => handleToggleStatus(u)}
-                          className={`p-1.5 rounded-lg border text-xs font-medium transition-all ${
-                            u.isActive
-                              ? "bg-rose-50 hover:bg-rose-500 hover:text-white border-rose-200 text-rose-600"
-                              : "bg-emerald-50 hover:bg-emerald-600 hover:text-white border-emerald-200 text-emerald-600"
-                          }`}
-                          title={u.isActive ? "Suspend Account" : "Activate Account"}
-                        >
-                          {u.isActive ? <UserX size={14} /> : <UserCheck size={14} />}
-                        </button>
+                        <>
+                          <button
+                            onClick={() => handleToggleStatus(u)}
+                            className={`p-1.5 rounded-lg border text-xs font-medium transition-all ${
+                              u.isActive
+                                ? "bg-amber-50 hover:bg-amber-500 hover:text-white border-amber-200 text-amber-600"
+                                : "bg-emerald-50 hover:bg-emerald-600 hover:text-white border-emerald-200 text-emerald-600"
+                            }`}
+                            title={u.isActive ? "Suspend Account" : "Activate Account"}
+                          >
+                            {u.isActive ? <UserX size={14} /> : <UserCheck size={14} />}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteUser(u)}
+                            className="p-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition-all text-xs font-medium"
+                            title="Delete Account & All Orders"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </>
                       )}
                     </td>
                   </tr>
@@ -249,9 +280,19 @@ const AdminCustomers = () => {
                   <p className="text-xs text-dark-400">Member since {formatDate(selectedUser.createdAt)}</p>
                 </div>
               </div>
-              <button onClick={() => setSelectedUser(null)} className="p-2 text-dark-400 hover:text-dark-800 rounded-full bg-rose-50">
-                <X size={20} />
-              </button>
+              <div className="flex items-center gap-2">
+                {selectedUser.role !== 'admin' && (
+                  <button
+                    onClick={() => handleDeleteUser(selectedUser)}
+                    className="px-3 py-1.5 rounded-xl bg-rose-500 text-white hover:bg-rose-600 transition-colors text-xs font-bold flex items-center gap-1.5 shadow-glow-rose"
+                  >
+                    <Trash2 size={14} /> Delete Account & Orders
+                  </button>
+                )}
+                <button onClick={() => setSelectedUser(null)} className="p-2 text-dark-400 hover:text-dark-800 rounded-full bg-rose-50">
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
             {loadingDetails ? (

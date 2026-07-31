@@ -66,6 +66,11 @@ export const adminService = {
     return response.data;
   },
 
+  deleteUser: async (id) => {
+    const response = await api.delete(`/admin/users/${id}`);
+    return response.data;
+  },
+
   getAllCustomRequests: async (params) => {
     const response = await api.get('/admin/custom-requests', { params });
     return response.data;

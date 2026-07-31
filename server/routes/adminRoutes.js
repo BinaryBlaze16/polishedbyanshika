@@ -8,6 +8,7 @@ const {
   getAllUsers,
   getUserDetails,
   toggleUserStatus,
+  deleteUser,
   getAllCustomRequests,
   updateCustomRequestStatus
 } = require('../controllers/adminController');
@@ -24,6 +25,7 @@ router.put('/orders/:id/verify-payment', verifyPayment);
 router.get('/users', getAllUsers);
 router.get('/users/:id', getUserDetails);
 router.patch('/users/:id/toggle-status', toggleUserStatus);
+router.delete('/users/:id', deleteUser);
 
 router.get('/custom-requests', getAllCustomRequests);
 router.put('/custom-requests/:id', updateCustomRequestStatus);

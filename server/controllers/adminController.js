@@ -354,6 +354,33 @@ const toggleUserStatus = asyncHandler(async (req, res) => {
   res.json({ success: true, data: user, user });
 });
 
+const deleteUser = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  if (user.role === 'admin') {
+    res.status(400);
+    throw new Error('Cannot delete staff/admin account');
+  }
+
+  // Delete all associated orders, addresses, custom requests, reviews, and user document
+  await Promise.all([
+    Order.deleteMany({ user: user._id }),
+    Address.deleteMany({ user: user._id }),
+    CustomRequest.deleteMany({ user: user._id }),
+    Review.deleteMany({ user: user._id }),
+    User.findByIdAndDelete(user._id)
+  ]);
+
+  res.json({
+    success: true,
+    message: 'User account and all associated orders deleted successfully'
+  });
+});
+
 const getAllCustomRequests = asyncHandler(async (req, res) => {
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 50;
@@ -412,6 +439,7 @@ module.exports = {
   getAllUsers,
   getUserDetails,
   toggleUserStatus,
+  deleteUser,
   getAllCustomRequests,
   updateCustomRequestStatus
 };
