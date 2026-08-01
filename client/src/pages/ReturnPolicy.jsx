@@ -1,4 +1,8 @@
+import React from 'react';
+import { RotateCcw, Clock, CheckCircle, XCircle, CreditCard, Heart, Package, Phone, AlertTriangle } from 'lucide-react';
+import PolicyLayout from '../components/PolicyLayout';
 import usePublicSettings from '../hooks/usePublicSettings';
+
 
 const Section = ({ icon: Icon, title, children }) => (
   <div className="mb-10">

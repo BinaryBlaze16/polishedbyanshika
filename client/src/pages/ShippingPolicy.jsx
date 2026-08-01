@@ -1,4 +1,8 @@
+import React from 'react';
+import { Truck, Clock, Globe, MapPin, Package, Phone, ShieldCheck, AlertTriangle } from 'lucide-react';
+import PolicyLayout from '../components/PolicyLayout';
 import usePublicSettings from '../hooks/usePublicSettings';
+
 
 const Section = ({ icon: Icon, title, children }) => (
   <div className="mb-10">

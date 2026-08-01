@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Heart, MessageCircle, Ruler, Minus, Plus, ShoppingBag, Truck, RotateCcw, Zap } from 'lucide-react';
+import { Heart, MessageCircle, Ruler, Minus, Plus, ShoppingBag, Truck, RotateCcw, Zap, Star, ZoomIn, X, ThumbsUp } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import StarRating from '../components/StarRating';
@@ -8,14 +8,179 @@ import SizeGuideModal from '../components/SizeGuideModal';
 import useCartStore from '../store/useCartStore';
 import useWishlistStore from '../store/useWishlistStore';
 import productService from '../services/productService';
-import { formatINR } from '../utils/formatCurrency';
+import reviewService from '../services/reviewService';
+import { formatINR, formatDate } from '../utils/formatCurrency';
 import toast from 'react-hot-toast';
 
 import usePublicSettings from '../hooks/usePublicSettings';
 
+// ─── ProductReviews Sub-Component ─────────────────────────────────────────────
+function ProductReviews({ productId, totalRating, numReviews }) {
+  const [reviews, setReviews] = useState([]);
+  const [distribution, setDistribution] = useState({});
+  const [sort, setSort] = useState('latest');
+  const [starFilter, setStarFilter] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [lightboxSrc, setLightboxSrc] = useState(null);
+
+  useEffect(() => {
+    if (!productId) return;
+    setLoading(true);
+    reviewService.getProductReviews(productId, { sort, star: starFilter })
+      .then(res => {
+        if (res?.success) {
+          setReviews(res.data || []);
+          if (res.distribution) setDistribution(res.distribution);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [productId, sort, starFilter]);
+
+  const totalApproved = numReviews || Object.values(distribution).reduce((a, b) => a + b, 0);
+
+  return (
+    <div className="space-y-6">
+      {/* Rating Overview */}
+      {totalApproved > 0 && (
+        <div className="flex flex-col sm:flex-row gap-6 p-5 bg-rose-50/60 rounded-2xl border border-rose-100">
+          <div className="text-center sm:w-32 shrink-0">
+            <div className="text-5xl font-bold text-dark-800">{totalRating?.toFixed(1) || '0.0'}</div>
+            <div className="flex justify-center gap-0.5 my-1.5">
+              {[1,2,3,4,5].map(n => (
+                <Star key={n} size={16} className={n <= Math.round(totalRating) ? 'fill-amber-400 text-amber-400' : 'text-gray-300'} />
+              ))}
+            </div>
+            <div className="text-xs text-dark-400">{totalApproved} {totalApproved === 1 ? 'review' : 'reviews'}</div>
+          </div>
+          <div className="flex-1 space-y-1.5">
+            {[5,4,3,2,1].map(star => {
+              const count = distribution[star] || 0;
+              const pct = totalApproved > 0 ? (count / totalApproved) * 100 : 0;
+              return (
+                <button
+                  key={star}
+                  onClick={() => setStarFilter(starFilter === star ? null : star)}
+                  className={`w-full flex items-center gap-2 group transition-opacity ${starFilter !== null && starFilter !== star ? 'opacity-50' : ''}`}
+                >
+                  <span className="text-xs font-semibold text-dark-500 w-4 shrink-0">{star}</span>
+                  <Star size={11} className="fill-amber-400 text-amber-400 shrink-0" />
+                  <div className="flex-1 h-2 bg-rose-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-amber-400 rounded-full transition-all duration-500"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <span className="text-xs text-dark-400 w-5 text-right shrink-0">{count}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Sort & Filters */}
+      <div className="flex flex-wrap items-center gap-2">
+        {['latest','highest','lowest'].map(s => (
+          <button
+            key={s}
+            onClick={() => setSort(s)}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
+              sort === s ? 'bg-rose-500 text-white border-rose-500' : 'border-rose-100 text-dark-400 hover:border-rose-300'
+            }`}
+          >
+            {s === 'latest' ? 'Latest' : s === 'highest' ? '⭐ Highest' : '⭐ Lowest'}
+          </button>
+        ))}
+        {starFilter && (
+          <button
+            onClick={() => setStarFilter(null)}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200"
+          >
+            {starFilter}★ only <X size={12} />
+          </button>
+        )}
+      </div>
+
+      {/* Reviews List */}
+      {loading ? (
+        <div className="py-8 text-center text-dark-400 text-sm">Loading reviews...</div>
+      ) : reviews.length === 0 ? (
+        <div className="py-12 text-center">
+          <MessageCircle size={36} className="mx-auto mb-3 text-dark-200" />
+          <p className="text-dark-400 text-sm font-medium">No reviews yet</p>
+          <p className="text-dark-300 text-xs mt-1">Be the first to review this product after your delivery!</p>
+        </div>
+      ) : (
+        <div className="space-y-5">
+          {reviews.map(rev => (
+            <div key={rev._id} className="p-5 bg-white border border-rose-100 rounded-2xl">
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <div>
+                  <p className="font-bold text-dark-800 text-sm">{rev.user?.name || 'Customer'}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="flex gap-0.5">
+                      {[1,2,3,4,5].map(n => (
+                        <Star key={n} size={12} className={n <= rev.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-300'} />
+                      ))}
+                    </span>
+                    {rev.isVerifiedPurchase && (
+                      <span className="text-[10px] text-emerald-600 bg-emerald-50 border border-emerald-100 rounded-full px-1.5 py-0.5 font-semibold">
+                        ✓ Verified
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <span className="text-xs text-dark-400 shrink-0">{formatDate(rev.createdAt)}</span>
+              </div>
+              {rev.title && <p className="font-semibold text-dark-800 text-sm mb-1">"{rev.title}"</p>}
+              <p className="text-sm text-dark-500 leading-relaxed">{rev.comment}</p>
+              {rev.images?.length > 0 && (
+                <div className="flex gap-2 mt-3 flex-wrap">
+                  {rev.images.map((url, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setLightboxSrc(url)}
+                      className="w-16 h-16 rounded-xl overflow-hidden border border-rose-100 hover:border-rose-400 transition-colors relative group"
+                    >
+                      <img src={url} alt="" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <ZoomIn size={14} className="text-white" />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Lightbox */}
+      {lightboxSrc && (
+        <div
+          className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setLightboxSrc(null)}
+        >
+          <div className="relative">
+            <img src={lightboxSrc} alt="" className="max-w-[90vw] max-h-[85vh] rounded-xl object-contain" />
+            <button
+              onClick={() => setLightboxSrc(null)}
+              className="absolute -top-3 -right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ProductDetail() {
   const { whatsappUrl } = usePublicSettings();
   const { slug } = useParams();
+
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -250,7 +415,7 @@ export default function ProductDetail() {
                 </ul>
               </div>
             )}
-            {activeTab === 'reviews' && <p>Customer reviews will be displayed here.</p>}
+            {activeTab === 'reviews' && <ProductReviews productId={product._id} totalRating={product.ratings || 0} numReviews={product.numReviews || 0} />}
             {activeTab === 'shipping' && <p>Free shipping on all orders across India. Orders are processed within 2-3 business days and delivered within 5-7 business days.</p>}
           </div>
         </div>

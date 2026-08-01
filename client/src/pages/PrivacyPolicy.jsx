@@ -1,4 +1,8 @@
+import React from 'react';
+import { Shield, Database, Eye, Globe, Lock, Mail, Bell, Users } from 'lucide-react';
+import PolicyLayout from '../components/PolicyLayout';
 import usePublicSettings from '../hooks/usePublicSettings';
+
 
 const Section = ({ icon: Icon, title, children }) => (
   <div className="mb-10">

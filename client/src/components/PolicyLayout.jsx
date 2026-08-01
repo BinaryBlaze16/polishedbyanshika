@@ -1,3 +1,8 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { ChevronRight } from 'lucide-react';
+import Navbar from './Navbar';
+import Footer from './Footer';
 import usePublicSettings from '../hooks/usePublicSettings';
 
 const PolicyLayout = ({ title, subtitle, icon: Icon, updatedDate, children }) => {
