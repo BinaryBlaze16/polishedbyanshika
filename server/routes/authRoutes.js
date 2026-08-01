@@ -8,7 +8,8 @@ const {
   updatePassword,
   addAddress,
   updateAddress,
-  deleteAddress
+  deleteAddress,
+  deleteAccount
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 const { uploadSingle } = require('../middleware/uploadMiddleware');
@@ -25,5 +26,6 @@ router.put('/addresses/:id', protect, updateAddress);
 router.put('/address/:id', protect, updateAddress);
 router.delete('/addresses/:id', protect, deleteAddress);
 router.delete('/address/:id', protect, deleteAddress);
+router.delete('/delete-account', protect, deleteAccount);
 
 module.exports = router;

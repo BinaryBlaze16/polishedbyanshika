@@ -7,7 +7,10 @@ import useWishlistStore from '../store/useWishlistStore';
 import SizeGuideModal from './SizeGuideModal';
 import logoImg from '../assets/logo.png';
 
+import usePublicSettings from '../hooks/usePublicSettings';
+
 const Navbar = () => {
+  const { settings } = usePublicSettings();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -72,11 +75,11 @@ const Navbar = () => {
               <Link to="/" className="flex items-center gap-2.5 group">
                 <img 
                   src={logoImg} 
-                  alt="Polished by Anshika" 
+                  alt={settings.businessName} 
                   className="h-10 w-10 md:h-12 md:w-12 rounded-full object-cover border border-rose-500/20 shadow-sm group-hover:scale-105 transition-transform" 
                 />
                 <span className="font-display text-lg md:text-2xl font-bold bg-gradient-to-r from-rose-500 to-rose-600 bg-clip-text text-transparent tracking-tight">
-                  Polished by Anshika
+                  {settings.businessName}
                 </span>
               </Link>
             </div>

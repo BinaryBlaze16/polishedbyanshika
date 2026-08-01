@@ -11,7 +11,10 @@ import productService from '../services/productService';
 import { formatINR } from '../utils/formatCurrency';
 import toast from 'react-hot-toast';
 
+import usePublicSettings from '../hooks/usePublicSettings';
+
 export default function ProductDetail() {
+  const { whatsappUrl } = usePublicSettings();
   const { slug } = useParams();
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
@@ -213,7 +216,7 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            <a href={`https://wa.me/916394802184?text=Hi, I have a query about ${product.name}`} target="_blank" rel="noreferrer" className="w-full flex justify-center items-center gap-2 bg-[#25D366]/10 text-[#25D366] border border-[#25D366]/30 hover:bg-[#25D366]/20 rounded-xl py-3 font-medium transition-all mb-8">
+            <a href={`${whatsappUrl}?text=${encodeURIComponent(`Hi, I have a query about ${product.name}`)}`} target="_blank" rel="noreferrer" className="w-full flex justify-center items-center gap-2 bg-[#25D366]/10 text-[#25D366] border border-[#25D366]/30 hover:bg-[#25D366]/20 rounded-xl py-3 font-medium transition-all mb-8">
               <MessageCircle size={20} /> Have a question? Ask on WhatsApp
             </a>
 

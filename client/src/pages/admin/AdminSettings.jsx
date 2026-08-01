@@ -32,6 +32,7 @@ const AdminSettings = () => {
           businessName: settingsMap.businessName || "PolishedByAnshika",
           businessWhatsapp: settingsMap.businessWhatsapp || "",
           businessInstagram: settingsMap.businessInstagram || "",
+          businessEmail: settingsMap.businessEmail || "polishedbyanshika@gmail.com",
           businessUpi: settingsMap.businessUpi || "",
           shippingCharge: Number(settingsMap.shippingCharge) || 0,
           freeShippingAbove: Number(settingsMap.freeShippingAbove) || 0,
@@ -130,6 +131,17 @@ const AdminSettings = () => {
                 />
               </div>
               <div className="space-y-2">
+                <label className="text-xs font-semibold text-dark-400 uppercase tracking-wider">Business Support Email</label>
+                <input
+                  type="email"
+                  name="businessEmail"
+                  value={settings.businessEmail || ''}
+                  onChange={handleInputChange}
+                  placeholder="polishedbyanshika@gmail.com"
+                  className="input-dark w-full"
+                />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
                 <label className="text-xs font-semibold text-dark-400 uppercase tracking-wider">UPI ID for Payments</label>
                 <input
                   type="text"

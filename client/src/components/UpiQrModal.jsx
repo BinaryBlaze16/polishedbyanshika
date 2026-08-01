@@ -4,7 +4,10 @@ import { formatINR } from '../utils/formatCurrency';
 import { showSuccess, showError } from './Toast';
 import api from '../services/api';
 
+import usePublicSettings from '../hooks/usePublicSettings';
+
 const UpiQrModal = ({ isOpen, onClose, total, orderId, onPaymentSubmit, upiId: customUpiId }) => {
+  const { settings } = usePublicSettings();
   const [utr, setUtr] = useState('');
   const [copied, setCopied] = useState(false);
   const [upiId, setUpiId] = useState(
@@ -29,7 +32,7 @@ const UpiQrModal = ({ isOpen, onClose, total, orderId, onPaymentSubmit, upiId: c
   const currentUpi = customUpiId || upiId;
 
   // Generate dynamic UPI Deep Link with exact order amount
-  const upiPayUrl = `upi://pay?pa=${currentUpi}&pn=Polished%20By%20Anshika&am=${total}&cu=INR&tn=Order%20${orderId || ''}`;
+  const upiPayUrl = `upi://pay?pa=${currentUpi}&pn=${encodeURIComponent(settings.businessName)}&am=${total}&cu=INR&tn=Order%20${orderId || ''}`;
   // Free high-quality QR code generator API
   const qrCodeImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiPayUrl)}`;
 
@@ -130,7 +133,7 @@ const UpiQrModal = ({ isOpen, onClose, total, orderId, onPaymentSubmit, upiId: c
 
           <div className="text-center">
             <p className="text-[11px] text-dark-400">
-              Need help? Contact support on WhatsApp <span className="font-bold text-dark-800">+91 6394802184</span>
+              Need help? Contact support on WhatsApp <span className="font-bold text-dark-800">{settings.businessWhatsapp}</span>
             </p>
           </div>
         </div>

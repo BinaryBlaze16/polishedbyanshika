@@ -21,6 +21,18 @@ const getPublicSettings = asyncHandler(async (req, res) => {
   if (!formattedSettings.businessWhatsapp) {
     formattedSettings.businessWhatsapp = process.env.BUSINESS_WHATSAPP || '+916394802184';
   }
+  if (!formattedSettings.businessInstagram) {
+    formattedSettings.businessInstagram = process.env.BUSINESS_INSTAGRAM || '@polished_by_anshika';
+  }
+  if (!formattedSettings.businessEmail) {
+    formattedSettings.businessEmail = process.env.BUSINESS_EMAIL || 'polishedbyanshika@gmail.com';
+  }
+  if (!formattedSettings.shippingCharge) {
+    formattedSettings.shippingCharge = process.env.SHIPPING_CHARGE || '50';
+  }
+  if (!formattedSettings.freeShippingAbove) {
+    formattedSettings.freeShippingAbove = process.env.FREE_SHIPPING_ABOVE || '999';
+  }
 
   res.json({ success: true, data: formattedSettings, businessUpi: formattedSettings.businessUpi });
 });
@@ -46,6 +58,7 @@ const seedSettings = async () => {
     { key: 'businessName', value: process.env.BUSINESS_NAME || 'PolishedByAnshika', type: 'string', isPublic: true },
     { key: 'businessWhatsapp', value: process.env.BUSINESS_WHATSAPP || '+916394802184', type: 'string', isPublic: true },
     { key: 'businessInstagram', value: process.env.BUSINESS_INSTAGRAM || '@polished_by_anshika', type: 'string', isPublic: true },
+    { key: 'businessEmail', value: process.env.BUSINESS_EMAIL || 'polishedbyanshika@gmail.com', type: 'string', isPublic: true },
     { key: 'businessUpi', value: process.env.BUSINESS_UPI || 'srivastavaanant39@oksbi', type: 'string', isPublic: true },
     { key: 'shippingCharge', value: process.env.SHIPPING_CHARGE || '50', type: 'number', isPublic: true },
     { key: 'freeShippingAbove', value: process.env.FREE_SHIPPING_ABOVE || '999', type: 'number', isPublic: true }

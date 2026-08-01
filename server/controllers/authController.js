@@ -184,6 +184,33 @@ const deleteAddress = asyncHandler(async (req, res) => {
   }
 });
 
+const deleteAccount = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    res.status(404);
+    throw new Error('User account not found');
+  }
+
+  const Order = require('../models/Order');
+  const Address = require('../models/Address');
+  const CustomRequest = require('../models/CustomRequest');
+  const Review = require('../models/Review');
+
+  // Delete all associated customer data from MongoDB
+  await Promise.all([
+    Order.deleteMany({ user: user._id }),
+    Address.deleteMany({ user: user._id }),
+    CustomRequest.deleteMany({ user: user._id }),
+    Review.deleteMany({ user: user._id }),
+    User.findByIdAndDelete(user._id)
+  ]);
+
+  res.json({
+    success: true,
+    message: 'Your account and all associated data have been permanently deleted.'
+  });
+});
+
 module.exports = {
   register,
   login,
@@ -192,5 +219,6 @@ module.exports = {
   updatePassword,
   addAddress,
   updateAddress,
-  deleteAddress
+  deleteAddress,
+  deleteAccount
 };

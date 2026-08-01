@@ -18,6 +18,11 @@ const Wishlist = lazy(() => import('./pages/Wishlist'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const CustomOrder = lazy(() => import('./pages/CustomOrder'));
+const ShippingPolicy = lazy(() => import('./pages/ShippingPolicy'));
+const ReturnPolicy = lazy(() => import('./pages/ReturnPolicy'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const TermsOfService = lazy(() => import('./pages/TermsOfService'));
+const FAQ = lazy(() => import('./pages/FAQ'));
 
 // Admin pages
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
@@ -43,6 +48,11 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/custom-order" element={<CustomOrder />} />
         <Route path="/order/:id" element={<OrderTracking />} />
+        <Route path="/shipping-policy" element={<ShippingPolicy />} />
+        <Route path="/return-policy" element={<ReturnPolicy />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/faq" element={<FAQ />} />
 
         {/* Protected Routes */}
         <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />

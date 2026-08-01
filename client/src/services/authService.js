@@ -40,6 +40,11 @@ export const authService = {
   deleteAddress: async (id) => {
     const response = await api.delete(`/auth/address/${id}`);
     return response.data;
+  },
+  
+  deleteAccount: async () => {
+    const response = await api.delete('/auth/delete-account');
+    return response.data;
   }
 };
 

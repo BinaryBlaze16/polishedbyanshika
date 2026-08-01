@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link, Navigate } from 'react-router-dom';
-import { User, Package, MapPin, Heart, LogOut, ChevronRight, Loader2, Plus, Palette, Clock, CheckCircle, XCircle, AlertCircle, IndianRupee } from 'lucide-react';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { User, Package, MapPin, Heart, LogOut, ChevronRight, Loader2, Plus, Palette, Clock, CheckCircle, XCircle, AlertCircle, IndianRupee, Trash2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import AddressCard from '../components/AddressCard';
 import AddressModal from '../components/AddressModal';
 import useAuthStore from '../store/useAuthStore';
+import useCartStore from '../store/useCartStore';
 import authService from '../services/authService';
 import orderService from '../services/orderService';
 import addressService from '../services/addressService';
@@ -38,6 +39,7 @@ const getCustomRequestStatusIcon = (status) => {
 };
 
 export default function Profile() {
+  const navigate = useNavigate();
   const { user, logout, updateUser } = useAuthStore();
   const isAdmin = user?.role === 'admin';
   const [activeTab, setActiveTab] = useState(isAdmin ? 'profile' : 'orders');
@@ -59,6 +61,9 @@ export default function Profile() {
   const [name, setName] = useState(user?.name || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+
+  // Delete Account State
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   useEffect(() => {
     if (activeTab === 'orders' && !isAdmin) {
@@ -183,6 +188,29 @@ export default function Profile() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    const confirmMsg = `⚠️ PERMANENT ACCOUNT DELETION WARNING:\n\nAre you sure you want to permanently delete your account (${user.email})?\n\nThis will PERMANENTLY REMOVE:\n- Your account profile\n- ALL your past orders & order history\n- ALL your saved delivery addresses\n- ALL your custom requests & product reviews\n\nThis action CANNOT be undone! Click OK to proceed.`;
+
+    if (!window.confirm(confirmMsg)) return;
+
+    setIsDeletingAccount(true);
+    const toastId = toast.loading('Deleting account and removing data...');
+    try {
+      const res = await authService.deleteAccount();
+      if (res && res.success) {
+        toast.success('Your account and data have been permanently deleted.', { id: toastId });
+        useCartStore.getState().clearCart();
+        logout();
+        navigate('/');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to delete account. Please try again.', { id: toastId });
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#FDF8F4] text-[#3D2B1F] font-sans flex flex-col">
       <Navbar />
@@ -268,49 +296,80 @@ export default function Profile() {
             
             {/* Account Details Tab */}
             {activeTab === 'profile' && (
-              <div className="bg-white border border-rose-100 rounded-3xl p-6 lg:p-8 shadow-card">
-                <h2 className="text-xl font-bold font-display text-dark-800 mb-6">Account Details</h2>
-                <form onSubmit={handleUpdateProfile} className="space-y-5 max-w-lg">
-                  <div>
-                    <label className="block text-xs font-semibold text-dark-600 mb-1">Full Name</label>
-                    <input 
-                      type="text" 
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full bg-[#FDF8F4] border border-rose-200 rounded-xl px-4 py-3 text-dark-800 text-sm focus:border-rose-500 focus:outline-none"
-                      required
-                    />
-                  </div>
+              <div className="bg-white border border-rose-100 rounded-3xl p-6 lg:p-8 shadow-card space-y-8">
+                <div>
+                  <h2 className="text-xl font-bold font-display text-dark-800 mb-6">Account Details</h2>
+                  <form onSubmit={handleUpdateProfile} className="space-y-5 max-w-lg">
+                    <div>
+                      <label className="block text-xs font-semibold text-dark-600 mb-1">Full Name</label>
+                      <input 
+                        type="text" 
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="w-full bg-[#FDF8F4] border border-rose-200 rounded-xl px-4 py-3 text-dark-800 text-sm focus:border-rose-500 focus:outline-none"
+                        required
+                      />
+                    </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-dark-600 mb-1">Email Address</label>
-                    <input 
-                      type="email" 
-                      value={user.email}
-                      disabled
-                      className="w-full bg-linen-100 border border-rose-100 rounded-xl px-4 py-3 text-dark-400 text-sm cursor-not-allowed"
-                    />
-                  </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-dark-600 mb-1">Email Address</label>
+                      <input 
+                        type="email" 
+                        value={user.email}
+                        disabled
+                        className="w-full bg-linen-100 border border-rose-100 rounded-xl px-4 py-3 text-dark-400 text-sm cursor-not-allowed"
+                      />
+                    </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-dark-600 mb-1">Phone Number</label>
-                    <input 
-                      type="tel" 
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="10-digit mobile number"
-                      className="w-full bg-[#FDF8F4] border border-rose-200 rounded-xl px-4 py-3 text-dark-800 text-sm focus:border-rose-500 focus:outline-none"
-                    />
-                  </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-dark-600 mb-1">Phone Number</label>
+                      <input 
+                        type="tel" 
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="10-digit mobile number"
+                        className="w-full bg-[#FDF8F4] border border-rose-200 rounded-xl px-4 py-3 text-dark-800 text-sm focus:border-rose-500 focus:outline-none"
+                      />
+                    </div>
 
-                  <button
-                    type="submit"
-                    disabled={isUpdatingProfile}
-                    className="px-6 py-3 bg-gradient-to-r from-rose-500 to-rose-400 hover:from-rose-600 hover:to-rose-500 text-white font-semibold rounded-xl text-sm transition-all shadow-glow-rose disabled:opacity-50"
-                  >
-                    {isUpdatingProfile ? 'Saving...' : 'Save Changes'}
-                  </button>
-                </form>
+                    <button
+                      type="submit"
+                      disabled={isUpdatingProfile}
+                      className="px-6 py-3 bg-gradient-to-r from-rose-500 to-rose-400 hover:from-rose-600 hover:to-rose-500 text-white font-semibold rounded-xl text-sm transition-all shadow-glow-rose disabled:opacity-50"
+                    >
+                      {isUpdatingProfile ? 'Saving...' : 'Save Changes'}
+                    </button>
+                  </form>
+                </div>
+
+                {/* Danger Zone: Delete Account */}
+                {!isAdmin && (
+                  <div className="pt-6 border-t border-rose-100">
+                    <div className="bg-red-50/60 border border-red-200/80 rounded-2xl p-6 space-y-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center border border-red-200 shrink-0 mt-0.5">
+                          <Trash2 size={18} className="text-red-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-red-800 text-base">Delete Your Account</h3>
+                          <p className="text-xs text-red-600/90 leading-relaxed mt-1">
+                            Permanently delete your account and all associated data including profile details, saved delivery addresses, order history, custom requests, and reviews from our database.
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleDeleteAccount}
+                        disabled={isDeletingAccount}
+                        className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl text-xs transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
+                      >
+                        {isDeletingAccount ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                        Delete My Account & All Data
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

@@ -6,9 +6,11 @@ import Footer from '../components/Footer';
 import useAuthStore from '../store/useAuthStore';
 import customRequestService from '../services/customRequestService';
 import toast from 'react-hot-toast';
+import usePublicSettings from '../hooks/usePublicSettings';
 
 export default function CustomOrder() {
   const { user } = useAuthStore();
+  const { settings } = usePublicSettings();
   const navigate = useNavigate();
   const [files, setFiles] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,13 +60,13 @@ export default function CustomOrder() {
       toast.success("Request submitted successfully! 🎨", { id: toastId });
 
       // Build WhatsApp message
-      const msg = `Hi PolishedByAnshika! I just submitted a custom request on the website.
+      const msg = `Hi ${settings.businessName}! I just submitted a custom request on the website.
 Name: ${formData.name}
 Shape: ${formData.shape}, Length: ${formData.length}
 Budget: ₹${formData.budget}
 Idea: ${formData.description}`;
-      const waNumber = import.meta.env.VITE_WHATSAPP_NUMBER || "916394802184";
-      window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`, '_blank');
+      const rawWa = (settings.businessWhatsapp || '').replace(/[^0-9]/g, '') || "916394802184";
+      window.open(`https://wa.me/${rawWa}?text=${encodeURIComponent(msg)}`, '_blank');
 
       setFormData({
         name: user?.name || '',

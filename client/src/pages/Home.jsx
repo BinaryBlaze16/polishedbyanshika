@@ -8,8 +8,10 @@ import SkeletonCard from '../components/SkeletonCard';
 import SizeGuideModal from '../components/SizeGuideModal';
 import productService from '../services/productService';
 import logoImg from '../assets/logo.png';
+import usePublicSettings from '../hooks/usePublicSettings';
 
 export default function Home() {
+  const { whatsappUrl, instagramUrl } = usePublicSettings();
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
@@ -207,10 +209,10 @@ export default function Home() {
           <h2 className="text-4xl md:text-5xl font-display font-bold mb-6 text-dark-800">Ready for your new look?</h2>
           <p className="text-xl text-dark-400 mb-10 max-w-2xl mx-auto">Follow us on Instagram for daily nail inspo or message us on WhatsApp for quick support.</p>
           <div className="flex flex-col sm:flex-row justify-center gap-6">
-            <a href="https://instagram.com/polished_by_anshika" target="_blank" rel="noreferrer" className="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white rounded-full font-medium transition-all shadow-lg">
+            <a href={instagramUrl} target="_blank" rel="noreferrer" className="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white rounded-full font-medium transition-all shadow-lg">
               Follow on Instagram
             </a>
-            <a href="https://wa.me/916394802184" target="_blank" rel="noreferrer" className="px-8 py-4 bg-[#25D366] hover:bg-[#20b958] text-white rounded-full font-medium transition-all shadow-lg">
+            <a href={whatsappUrl} target="_blank" rel="noreferrer" className="px-8 py-4 bg-[#25D366] hover:bg-[#20b958] text-white rounded-full font-medium transition-all shadow-lg">
               Chat on WhatsApp
             </a>
           </div>
