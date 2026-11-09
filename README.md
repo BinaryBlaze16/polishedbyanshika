@@ -45,13 +45,6 @@ npm run dev             # Starts on http://localhost:5173
 
 ---
 
-## 👤 Admin Account (Pre-seeded)
-
-| Field | Value |
-|---|---|
-| Email | `admin@polishedbyanshika.com` |
-| Password | `Anshika@#6394802184` |
-| Role | Admin |
 
 > ⚠️ Change the password after your first login in production!
 
