@@ -46,10 +46,6 @@ npm run dev             # Starts on http://localhost:5173
 ---
 
 
-> ⚠️ Change the password after your first login in production!
-
----
-
 ## 🔑 Required Environment Variables (server/.env)
 
 ```env
