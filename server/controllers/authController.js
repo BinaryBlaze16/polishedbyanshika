@@ -3,6 +3,7 @@ const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
 const bcrypt = require('bcryptjs');
 const { uploadImageToCloudinary } = require('../utils/cloudinaryUpload');
+const { sendWelcomeEmail } = require('../utils/sendEmail');
 
 const register = asyncHandler(async (req, res) => {
   const { name, email, password, phone } = req.body;
@@ -30,6 +31,11 @@ const register = asyncHandler(async (req, res) => {
       avatar: user.avatar,
       phone: user.phone,
     };
+
+    // Asynchronously send greeting/welcome email from no-reply@polishedbyanshika.in
+    sendWelcomeEmail(user).catch((err) => {
+      console.error('⚠️ Welcome email background trigger error:', err.message);
+    });
 
     res.status(201).json({
       success: true,
